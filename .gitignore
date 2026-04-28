@@ -1,0 +1,30 @@
+# Data (zu groß für GitHub - lokal halten)
+data/raw/
+data/processed/
+*.csv
+*.parquet
+*.zip
+
+# Modelle
+models/*.pkl
+models/*.joblib
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
