@@ -1,8 +1,8 @@
 """ELO rating system for NBA teams.
 
-Klassisches Schach-ELO, angepasst an NBA mit Heimvorteils-Bonus. Fortlaufend
-chronologisch ueber alle Spiele aktualisiert; pro Spiel kennen wir das ELO
-*vor* dem Spiel — leakage-frei.
+Classic chess-style ELO adapted for the NBA, with a home-court bonus. Ratings
+are updated chronologically across all games, so for each game we know the
+ELO *before* tip-off — leakage-free by construction.
 """
 from __future__ import annotations
 
@@ -15,9 +15,9 @@ DEFAULT_HOME_ADV = 100
 
 def win_prob(team_elo: float, opp_elo: float, is_home: bool = True,
              home_adv: float = DEFAULT_HOME_ADV) -> float:
-    """Erwartete Gewinnwahrscheinlichkeit gemaess ELO-Formel.
+    """Expected win probability per the standard ELO formula.
 
-    P(team gewinnt) = 1 / (1 + 10^((opp - team - home_adv*sign) / 400))
+    P(team wins) = 1 / (1 + 10^((opp - team - home_adv*sign) / 400))
     """
     delta = opp_elo - team_elo - (home_adv if is_home else -home_adv)
     return 1.0 / (1.0 + 10 ** (delta / 400))
@@ -25,7 +25,7 @@ def win_prob(team_elo: float, opp_elo: float, is_home: bool = True,
 
 def update(elo_winner: float, elo_loser: float, winner_was_home: bool,
            k: float = DEFAULT_K, home_adv: float = DEFAULT_HOME_ADV) -> tuple[float, float]:
-    """ELO-Update nach einem Spiel. Gibt (neues_elo_gewinner, neues_elo_verlierer) zurueck."""
+    """Apply the post-game ELO update. Returns (new_winner_elo, new_loser_elo)."""
     expected_winner = win_prob(elo_winner, elo_loser, is_home=winner_was_home, home_adv=home_adv)
     new_winner = elo_winner + k * (1.0 - expected_winner)
     new_loser = elo_loser + k * (0.0 - (1.0 - expected_winner))
@@ -35,11 +35,11 @@ def update(elo_winner: float, elo_loser: float, winner_was_home: bool,
 def compute_history(games: pd.DataFrame, k: float = DEFAULT_K,
                     home_adv: float = DEFAULT_HOME_ADV,
                     initial: float = INITIAL_ELO) -> pd.DataFrame:
-    """Berechnet Pre-Game-ELOs fuer alle Spiele in chronologischer Reihenfolge.
+    """Compute pre-game ELOs for every game in chronological order.
 
-    Erwartete Spalten: gameDate, hometeamId, awayteamId, homeScore, awayScore.
-    Gibt das DataFrame zurueck mit zusaetzlichen Spalten:
-        home_elo_pre, away_elo_pre, elo_diff
+    Required columns: ``gameDate, hometeamId, awayteamId, homeScore, awayScore``.
+    Returns the dataframe with three new columns:
+        ``home_elo_pre``, ``away_elo_pre``, ``elo_diff``.
     """
     games = games.sort_values('gameDate').reset_index(drop=True).copy()
     elos: dict = {}
