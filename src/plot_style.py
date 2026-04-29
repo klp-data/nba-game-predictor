@@ -1,11 +1,12 @@
 """Publication-ready matplotlib style.
 
-Benutzung:
+Usage:
     from src.plot_style import apply
     apply()
 
-Optional: `apply(use_tex=True)` aktiviert echtes LaTeX-Rendering, sofern eine
-LaTeX-Installation auf dem System vorhanden ist (sonst Fallback auf Mathtext).
+Optional: ``apply(use_tex=True)`` switches to true LaTeX rendering, provided a
+LaTeX installation is available on the system (otherwise it falls back to
+matplotlib's mathtext).
 """
 from __future__ import annotations
 
@@ -14,10 +15,10 @@ import matplotlib.pyplot as plt
 
 
 COLORS = {
-    'primary':   '#2A5C8B',  # gedaempftes Blau
-    'secondary': '#C45A5A',  # gedaempftes Rot
-    'accent':    '#D08A2C',  # warmes Orange
-    'success':   '#4A8B5C',  # gedaempftes Gruen
+    'primary':   '#2A5C8B',  # muted blue
+    'secondary': '#C45A5A',  # muted red
+    'accent':    '#D08A2C',  # warm orange
+    'success':   '#4A8B5C',  # muted green
     'neutral':   '#6B6B6B',
     'highlight': '#8B2A5C',
 }
@@ -26,7 +27,7 @@ PALETTE = ['#2A5C8B', '#C45A5A', '#D08A2C', '#4A8B5C', '#6B4E8B', '#8B6B2A']
 
 
 def apply(use_tex: bool = False) -> None:
-    """Applies a clean, publication-ready style."""
+    """Apply a clean, publication-ready matplotlib style."""
     plt.rcdefaults()
     mpl.rcParams.update({
         'font.family':       'serif',
