@@ -1,4 +1,4 @@
-"""NBA Game Predictor — wiederverwendbare Module."""
+"""NBA Game Predictor — reusable modules."""
 
 from src import elo, series, bracket, plot_style
 
