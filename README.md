@@ -55,7 +55,10 @@ nba-game-predictor/
 │   ├── 06_advanced_features.ipynb
 │   ├── 07_series_simulation.ipynb
 │   ├── 08_bracket_simulation.ipynb
-│   └── 09_conditional_predictions.ipynb
+│   ├── 09_conditional_predictions.ipynb
+│   └── 10_live_demo_2025.ipynb       # Live-Demo der laufenden Saison
+├── docs/
+│   └── FEATURES.md                   # Erklärung aller Daten & Features
 ├── scripts/
 │   └── generate_highlight_plots.py
 ├── assets/                  # Highlight-PNGs für README
@@ -76,6 +79,9 @@ nba-game-predictor/
 7. **Series-Simulation** — Best-of-7 mit NBA-Heimrechts-Pattern (2-2-1-1-1).
 8. **Full Bracket Monte Carlo** — Kompletter Playoff-Tree, 10 000 Simulationen pro Saison, Championship-Wahrscheinlichkeit pro Team.
 9. **Conditional Predictions** — Wie verändert sich die Treffer-Quote, wenn frühere Runden bekannt sind?
+10. **Live Demo** — Vorhersage für die aktuell laufende 2025-26-Saison.
+
+Eine ausführliche Erklärung jeder Datentabelle und jedes Features findet sich in [`docs/FEATURES.md`](docs/FEATURES.md).
 
 ## Tech-Stack
 
@@ -109,14 +115,3 @@ python scripts/generate_highlight_plots.py
 - **Walk-Forward statt Random Split:** Sport-Daten sind zeitabhängig, ein Random Split wäre Augenwischerei.
 - **Series-Simulation:** Best-of-7 mit NBA-2-2-1-1-1-Format und Home-Court-Adjustment von ~7 Prozentpunkten (entspricht ELO-Heimvorteil 100 / 400 ≈ 7 %).
 
-## Was bewusst nicht drin ist
-
-- **Live-Verletzungsdaten** (würde echtes Scraping brauchen)
-- **Vegas-Quoten / ROI-Backtest** mit echten Lines
-- **Player-Tracking-Daten** (NBA proprietär)
-
-Diese Limitierungen erklären den Abstand zur theoretischen Decke (~70 % Game-Accuracy).
-
-## Lizenz
-
-MIT — frei zur Nutzung und Modifikation.
