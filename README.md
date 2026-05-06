@@ -8,7 +8,7 @@ The main idea is simple: Use historical statistics to predict future game outcom
 
 **1. It's a team sport with a long season.** Unlike individual sports such as tennis or biathlon, the result does not depend on one athlete having a good or bad day. With five players on the court and 82 regular-season games, individual variance gets averaged out. This enables statistical consistency which is resulting in ideal conditions for machine-learning models.
 
-**2. High-scoring games are more forgiving to model.** An NBA game typically ends 110–105, not 2–1. If my model is off by a couple of baskets, the predicted *winner* often still holds. Compare that to soccer, where a single goal swing flips the result entirely. More scoring events means the final score is closer to the "true" performance gap between teams, and small modeling errors do not cascade into wrong predictions.
+**2. High-scoring games are more forgiving to model.** An NBA game typically ends 110–105, not 2–1. If my model is off by a couple of baskets, the predicted *winner* often still holds. Compare that to football, where a single goal swing flips the result entirely. More scoring events means the final score is closer to the "true" performance gap between teams, and small modeling errors do not cascade into wrong predictions.
 
 **3. The data is rich and easy to come by.** The NBA has been tracking detailed statistics for decades, and the basketball analytics community is huge. That means I can work with clean, well-documented datasets going back to 1947.
 
