@@ -15,15 +15,13 @@ import matplotlib.pyplot as plt
 
 
 COLORS = {
-    'primary':   '#2A5C8B',  # muted blue
-    'secondary': '#C45A5A',  # muted red
-    'accent':    '#D08A2C',  # warm orange
-    'success':   '#4A8B5C',  # muted green
-    'neutral':   '#6B6B6B',
-    'highlight': '#8B2A5C',
+    'primary':   '#1f77b4',  # blue
+    'secondary': '#f93414',  # red
+    'accent':    '#57A048',  # green
+    'neutral':   '#6B6B6B',  # gray
 }
 
-PALETTE = ['#2A5C8B', '#C45A5A', '#D08A2C', '#4A8B5C', '#6B4E8B', '#8B6B2A']
+PALETTE = ['#1f77b4', '#f93414', '#57A048']
 
 
 def apply(use_tex: bool = False) -> None:
@@ -32,9 +30,9 @@ def apply(use_tex: bool = False) -> None:
     mpl.rcParams.update({
         'font.family':       'serif',
         'font.serif':        ['Computer Modern Roman', 'Times New Roman', 'DejaVu Serif'],
-        'font.size':         11,
+        'font.size':         12,
         'axes.titlesize':    12,
-        'axes.labelsize':    11,
+        'axes.labelsize':    12,
         'axes.titleweight':  'normal',
         'axes.spines.top':   False,
         'axes.spines.right': False,
@@ -42,10 +40,11 @@ def apply(use_tex: bool = False) -> None:
         'grid.alpha':        0.3,
         'grid.linestyle':    '--',
         'grid.linewidth':    0.6,
-        'xtick.labelsize':   10,
-        'ytick.labelsize':   10,
+        'xtick.labelsize':   11,
+        'ytick.labelsize':   11,
         'legend.frameon':    False,
-        'legend.fontsize':   10,
+        'legend.fontsize':   8,
+        'figure.figsize':    (10, 5),
         'figure.dpi':        110,
         'savefig.dpi':       180,
         'savefig.bbox':      'tight',
