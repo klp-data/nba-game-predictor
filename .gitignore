@@ -1,13 +1,10 @@
-# Data (zu groß für GitHub - lokal halten)
+# Data (too large for GitHub — keep local)
 data/raw/
 data/processed/
-*.csv
-*.parquet
 *.zip
 
-# Modelle
-models/*.pkl
-models/*.joblib
+# Models
+models/
 
 # Python
 __pycache__/
