@@ -1,159 +1,106 @@
 # NBA Game Predictor
 
-A personal machine-learning project where I try to predict the outcomes of NBA games, playoff series, and championships using historical data from [Kaggle](https://www.kaggle.com/datasets/eoinamoore/historical-nba-data-and-player-box-scores) spanning 1947 to today.
+End-to-end machine learning pipeline predicting NBA game outcomes, with full historical backtesting and Monte Carlo playoff simulation.
 
-## Why basketball?
-
-The main idea is simple: Use historical statistics to predict future game outcomes. But why basketball specifically, and not tennis, football, or biathlon?
-
-**1. It's a team sport with a long season.** Unlike individual sports such as tennis or biathlon, the result does not depend on one athlete having a good or bad day. With five players on the court and 82 regular-season games, individual variance gets averaged out. This enables statistical consistency which is resulting in ideal conditions for machine-learning models.
-
-**2. High-scoring games are more forgiving to model.** An NBA game typically ends 110–105, not 2–1. If my model is off by a couple of baskets, the predicted *winner* often still holds. Compare that to football, where a single goal swing flips the result entirely. More scoring events means the final score is closer to the "true" performance gap between teams, and small modeling errors do not cascade into wrong predictions.
-
-**3. The data is rich and easy to come by.** The NBA has been tracking detailed statistics for decades, and the basketball analytics community is huge. That means I can work with clean, well-documented datasets going back to 1947.
+**73,224 games · 80 seasons (1946–2026) · ELO + XGBoost + Monte Carlo**
 
 ---
 
-In the following sections, I will walk you through my approach, the data, and the results. I hope you enjoy the reasoning and the results.
+## Key results
 
-## Highlights
+| Metric | Value | Context |
+|---|---:|---|
+| Out-of-sample game accuracy | **64.8 %** | Test set: 2019–2025 |
+| Walk-forward backtest accuracy | **68.0 %** | 66 seasons, retrained per year |
+| Walk-forward AUC | **0.71** | Stable across all eras |
+| Top-3 NBA champion hit rate | **75 %** | 30/40 seasons backtested |
+| Top-5 NBA champion hit rate | **92.5 %** | 37/40 seasons backtested |
+| Avg. P assigned to actual champion | **34 %** | 5.5× random baseline (6.25 %) |
 
-| Metric | Value |
-|---|---|
-| Game-level accuracy (XGBoost, out-of-sample 2019+) | **64.8 %** |
-| Game-level AUC | **0.705** |
-| Series-level accuracy (Best-of-7) | **~74 %** |
-| **Pre-playoff Top-1 champion pick (40-season backtest)** | **52.5 %** |
-| Pre-playoff Top-3 hit rate | **75 %** |
-| Average model confidence in the *actual* champion (before playoffs) | **34 %** *(random baseline: 6.25 %)* |
+---
 
-Across 40 historical seasons, the pre-playoff model placed the eventual champion in its **top 3** picks **75 %** of the time, and on the **#1 spot** **52.5 %** of the time — using only ELO ratings and the bracket structure.
+## Pipeline overview
 
-## Live Demo: 2025-26 NBA Playoffs
+| # | Notebook | What it does |
+|---|---|---|
+| 01 | `01_data_exploration.ipynb` | EDA on 73k games — home advantage trends, era effects, missing data |
+| 02 | `02_feature_engineering.ipynb` | ELO ratings, rolling form (5/10/20 games), head-to-head, rest days, back-to-backs |
+| 03 | `03_baseline_model.ipynb` | Trivial baseline → Logistic Regression → XGBoost on a fixed 2019 split |
+| 04 | `04_backtesting.ipynb` | Walk-forward validation: retrain model each season, predict the next |
+| 05 | `05_player_features.ipynb` | Box-score aggregation (shooting %, plus/minus, turnovers) |
+| 06 | `06_advanced_features.ipynb` | Star availability + strength-of-schedule features |
+| 07 | `07_series_simulation.ipynb` | Best-of-7 Monte Carlo with NBA 2-2-1-1-1 home court |
+| 08 | `08_bracket_simulation.ipynb` | Full bracket Monte Carlo (10k sims × 40 seasons) |
+| 09 | `09_conditional_predictions.ipynb` | Probability updating as playoff rounds resolve |
+| 10 | `10_live_demo_2025.ipynb` | Live championship probabilities for the ongoing 2025–26 playoffs |
 
-The current playoffs are running. As of **2026-04-26**, here is the model's live view.
+---
 
-### Round 1 standings (so far)
+## Selected results
 
-| Higher Seed | ELO | Lower Seed | ELO | Series | Current Leader | Games Played |
-|---|---|---|---|---|---|---|
-| Thunder | 1758 | Suns | 1521 | 3-0 | Thunder | 3 |
-| Spurs | 1707 | Trail Blazers | 1521 | 3-1 | Spurs | 4 |
-| Celtics | 1685 | 76ers | 1513 | 3-1 | Celtics | 4 |
-| Pistons | 1662 | Magic | 1540 | 2-1 | Magic | 3 |
-| Nuggets | 1659 | Timberwolves | 1587 | 3-1 | Timberwolves | 4 |
-| Cavaliers | 1631 | Raptors | 1516 | 2-2 | tied | 4 |
-| Knicks | 1630 | Hawks | 1563 | 2-2 | tied | 4 |
-| Lakers | 1625 | Rockets | 1598 | 3-1 | Lakers | 4 |
+### Walk-forward accuracy over 66 seasons
+![Walk-forward performance](docs/walk_forward.png)
 
-### Top-5 championship picks (top-16 ELO seeding)
+Accuracy is stable around 65–70 % across eight decades of NBA basketball. The dip in 2020 (Covid empty-arena games) is visible — home advantage collapsed, and the model struggled because it had been trained on eras with stronger home court.
 
-| Team | P(Championship) |
-|---|---|
-| **Thunder** | **47.6 %** |
-| Spurs | 18.2 %  |
-| Celtics | 9.8 % |
-| Rockets | 5.9 % |
-| Pistons | 4.2 % |
+### Best-of-7 amplifies any edge
+![Best of 7 amplifier](docs/bo7_amplifier.png)
 
-OKC are the runaway favorites with ELO ~1760 — exceptional for a regular-season finisher. The model gives them nearly half of all simulated championships.
+A 60 % per-game probability becomes ≈ 71 % over a best-of-7 series. This is why series-level predictions are noticeably stronger than game-level predictions.
 
-## Example: 2023-24 Season
+### Where does the actual champion land in our top picks?
+![Bracket backtest](docs/bracket_backtest.png)
 
-![Pre-Playoff Title Probabilities 2023](assets/champ_probs_2023.png)
+Across 40 backtested seasons (1983–2024), the actual NBA champion was the model's top pick **52.5 %** of the time and within its top 3 picks **75 %** of the time. Random baseline: 6.25 %.
 
-The model gave the Boston Celtics 58.1 % title probability before the playoffs began. They went on to win the Finals 4-1 against Dallas.
+### Confidence evolves through the playoffs
+![Conditional confidence](docs/conditional_confidence.png)
 
-## Why Best-of-7 Matters
+Average probability assigned to the actual champion: 34 % pre-playoffs → 37 % after round 1 → 45 % after the conference semis → 66 % in the finals. Most of the uncertainty lives in round 1 — once the final 8 are set, the model gets noticeably sharper.
 
-Even a modest per-game edge gets amplified disproportionately when stretched across a 7-game series:
+### Live: 2025–26 playoffs (R1 in progress)
+![Live 2026](docs/live_2026.png)
 
-![Series amplifier](assets/series_amplifier.png)
+Current top picks (top-16 by ELO seeded into a standard bracket):
+Thunder 47.6 %, Spurs 18.2 %, Celtics 9.8 %, Rockets 5.9 %, Pistons 4.2 %.
 
-A 65 % per-game probability becomes an 80 % series probability. This amplification is what turns a mediocre game-level predictor into a genuinely useful championship predictor.
+---
 
-## Where the Uncertainty Lives
+## What worked and what didn't
 
-As more rounds resolve, the model's confidence in the actual champion grows:
+**Worked:**
+- ELO with a 100-point home-court adjustment carries the model. It captures ~35 % of total feature importance on its own and is the foundation for all downstream simulations.
+- The Best-of-7 Monte Carlo amplifies any per-game edge into a sharper series prediction. Bracket-level top-3 hit rate (75 %) is materially better than per-game accuracy (65 %).
+- Walk-forward validation gives a much more honest performance estimate than a single train/test split — and reveals that modern NBA seasons are *harder* to predict (home advantage has shrunk from ~66 % in the 60s to ~55 % today).
 
-![Conditional hit rate](assets/conditional_hitrate.png)
+**Didn't (honest negative findings):**
+- **Player box-score features added almost nothing.** Old model 64.23 % → with 24 added features 64.86 %. ELO and rolling form already encode "this team scores well and protects the ball" indirectly — the box-score features were largely redundant.
+- **Star availability and strength-of-schedule features were marginal too.** Full model with 63 features tops out at 64.82 % accuracy — within noise of the 27-feature baseline. AUC and log-loss did improve modestly, so the new features made probabilities slightly more honest, just not the binary calls.
 
-The biggest jump happens between *Round 2* and *Conference Finals* — once the final 4 are set, the model is highly confident about who wins it all.
+**The ceiling lesson:** team-level historical data appears to converge around 65 % accuracy on NBA games. Breaking past it likely requires:
+- Real-time injury status and confirmed starting lineups
+- Player tracking / advanced metrics not in the box score
+- Hyperparameter tuning with proper nested CV (Optuna)
 
-## Architecture
+---
 
-```
-nba-game-predictor/
-├── src/                     # Reusable modules
-│   ├── elo.py               # ELO system (pre-game ratings, win probabilities)
-│   ├── series.py            # Best-of-7 simulation (analytical + Monte Carlo)
-│   ├── bracket.py           # Bracket construction + championship probabilities
-│   └── plot_style.py        # Publication-ready matplotlib theme
-├── notebooks/               # Development journey across 10 steps
-│   ├── 01_data_exploration.ipynb
-│   ├── 02_feature_engineering.ipynb
-│   ├── 03_baseline_model.ipynb
-│   ├── 04_backtesting.ipynb
-│   ├── 05_player_features.ipynb
-│   ├── 06_advanced_features.ipynb
-│   ├── 07_series_simulation.ipynb
-│   ├── 08_bracket_simulation.ipynb
-│   ├── 09_conditional_predictions.ipynb
-│   └── 10_live_demo_2025.ipynb       # Live demo of the ongoing season
-├── docs/
-│   └── FEATURES.md                   # Detailed glossary of all data & features
-├── scripts/
-│   └── generate_highlight_plots.py
-├── assets/                  # Highlight PNGs for README
-├── data/                    # Gitignored (1.8 GB Kaggle dataset)
-├── models/                  # Gitignored (trained models)
-├── requirements.txt
-└── README.md
-```
+## Tech stack
 
-## Pipeline
+`Python` · `pandas` · `numpy` · `XGBoost` · `scikit-learn` · `matplotlib` · `seaborn` · `pyarrow` · `joblib`
 
-1. **EDA** — 73 000 NBA games from 1947 to 2025; home-win rate 61.6 %; scoring drift across decades.
-2. **Feature Engineering** — Rolling team form (5/10/20 games), head-to-head (last 5), rest days, back-to-back detection, ELO rating (`K=20`, home advantage 100).
-3. **Baseline Models** — Logistic regression as sanity check, XGBoost as main model.
-4. **Walk-Forward Backtesting** — Model retrained each year on all prior seasons, tested on the next.
-5. **Player Box-Score Features** — Team-aggregated FG%, 3P%, plus/minus of the top 3 minute-getters (rolling).
-6. **Advanced Features** — Top-5 star availability, strength-of-schedule-adjusted form, quality wins.
-7. **Series Simulation** — Best-of-7 with the NBA's 2-2-1-1-1 home-court pattern.
-8. **Full Bracket Monte Carlo** — Complete playoff tree, 10 000 simulations per season, championship probability per team.
-9. **Conditional Predictions** — How does the hit rate change when earlier rounds are known?
-10. **Live Demo** — Predictions for the ongoing 2025-26 season.
+Methodology: walk-forward time-series CV, ELO rating system, Monte Carlo simulation (10k iterations), feature ablation, probability calibration analysis.
 
-A detailed glossary of every data table and every engineered feature lives in [`docs/FEATURES.md`](docs/FEATURES.md).
+---
 
-## Tech Stack
-
-Python · pandas · scikit-learn · XGBoost · matplotlib · seaborn · Jupyter
-
-## Setup
+## Reproduce
 
 ```bash
 git clone https://github.com/klp-data/nba-game-predictor.git
 cd nba-game-predictor
-python -m venv .venv
-.venv\Scripts\activate          # Windows
 pip install -r requirements.txt
+# Download the Kaggle "NBA Database" dataset to data/raw/
+jupyter notebook notebooks/
+# Run 01 → 10 in order
 ```
 
-Download the data from [Kaggle](https://www.kaggle.com/datasets/eoinamoore/historical-nba-data-and-player-box-scores) and unpack it into `data/raw/`.
-
-## Reproducing the Results
-
-```bash
-# Run notebooks in order (01 → 10)
-jupyter lab
-
-# Regenerate the README highlight plots
-python scripts/generate_highlight_plots.py
-```
-
-## Methodological Notes
-
-- **No data leakage:** every rolling feature uses `.shift(1)` before aggregation. ELO is updated chronologically. The walk-forward backtest only ever trains on games strictly before the test window.
-- **Walk-forward instead of random splits:** sports data are time-dependent, and a random split would inflate accuracy unrealistically.
-- **Series simulation:** Best-of-7 with the NBA 2-2-1-1-1 format and a home-court adjustment of roughly 7 percentage points (matching ELO home advantage 100 / 400 ≈ 7 %).
+Dataset: [NBA Database on Kaggle](https://www.kaggle.com/datasets/wyattowalsh/basketball) (Wyatt Walsh).
