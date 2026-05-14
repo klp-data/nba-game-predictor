@@ -1,9 +1,8 @@
 """Playoff bracket construction + Monte Carlo simulation.
 
-We rebuild the bracket tree from the actual playoff games of a season:
-series are unordered team pairs, rounds come from chronological order
-(8 R1, 4 R2, 2 R3, 1 Finals), and parent series are looked up via the
-actual winners of each lower round.
+I rebuild the bracket from a season's playoff games: series are unordered team
+pairs, rounds come from chronological order (8 R1, 4 R2, 2 R3, 1 Finals), and
+I find each round's parents by checking the lower round's actual winners.
 """
 from __future__ import annotations
 
@@ -16,19 +15,14 @@ from src import series as series_mod
 
 
 def build_bracket(playoffs_for_season: pd.DataFrame) -> Optional[pd.DataFrame]:
-    """Rebuild the 16-team bracket for one season.
-
-    Needs ``gameDate, hometeamId, awayteamId, home_win`` columns. Returns
-    ``None`` if there aren't exactly 15 series (i.e. pre-modern format).
-    """
+    """Reconstruct the bracket tree from a season's playoff games."""
     df = playoffs_for_season.copy()
     df['team_pair'] = df.apply(lambda r: tuple(sorted([r.hometeamId, r.awayteamId])), axis=1)
 
     series_list = []
     for pair, grp in df.groupby('team_pair'):
         if len(grp) < 3:
-            # best-of-5 and best-of-7 always have ≥3 games; skip pre-modern short series
-            return None
+            return None  # too short = old best-of-5 era or fragmented data
         higher = grp.hometeamId.value_counts().idxmax()
         lower = [t for t in pair if t != higher][0]
         wins_h = ((grp.hometeamId == higher) & (grp.home_win == 1)).sum() + \
@@ -42,13 +36,13 @@ def build_bracket(playoffs_for_season: pd.DataFrame) -> Optional[pd.DataFrame]:
 
     s = pd.DataFrame(series_list).sort_values('first_date').reset_index(drop=True)
     if len(s) != 15:
-        return None
+        return None  # 16-team bracket = 15 series; anything else is pre-modern
 
     s['round'] = [1] * 8 + [2] * 4 + [3] * 2 + [4]
     s['uid'] = range(len(s))
     s['parents'] = [[] for _ in range(len(s))]
 
-    # Resolve parent series by checking which lower-round series fed into this one
+    # for each higher round, find which two lower-round series fed it (by actual winners)
     for r in [2, 3, 4]:
         higher_round = s[s['round'] == r]
         lower_round = s[s['round'] == r - 1]
@@ -64,12 +58,7 @@ def build_bracket(playoffs_for_season: pd.DataFrame) -> Optional[pd.DataFrame]:
 def simulate_one(bracket_rows: list[dict], team_elos: dict,
                  rng: np.random.Generator,
                  fixed_winners: Optional[dict] = None) -> int:
-    """Simulate one full bracket run. Returns the champion's team ID.
-
-    ``bracket_rows`` is the bracket as a list of dicts (uid, round, higher,
-    lower, winner, parents). ``team_elos`` maps team_id -> ELO. ``fixed_winners``
-    pins outcomes for earlier rounds — used for conditional predictions.
-    """
+    """One bracket run; returns the champion's team ID. ``fixed_winners`` pins earlier rounds."""
     winners = dict(fixed_winners or {})
     for r in bracket_rows:
         if r['uid'] in winners:
@@ -89,12 +78,10 @@ def simulate_one(bracket_rows: list[dict], team_elos: dict,
 
 def championship_probs(bracket: pd.DataFrame, team_elos: dict, n_sim: int = 10000,
                        seed: int = 42, start_round: int = 1) -> dict:
-    """Run ``n_sim`` bracket simulations and return per-team championship probabilities.
+    """Per-team championship probability from ``n_sim`` bracket simulations.
 
-    ``start_round=1`` simulates from the pre-playoffs view. ``start_round=2`` pins the
-    actual R1 winners, ``start_round=3`` pins R1+R2, and so on.
-
-    ``seed`` is fixed so runs are reproducible — pass any other int for a fresh draw.
+    ``start_round`` controls how much of the actual bracket is pinned: 1 = simulate
+    from pre-playoffs, 2 = pin R1 winners, 3 = pin R1+R2, 4 = pin everything up to finals.
     """
     rows = bracket[['uid', 'round', 'higher', 'lower', 'winner', 'parents']].to_dict('records')
     teams = list(team_elos.keys())

@@ -76,21 +76,23 @@ Thunder 47.6 %, Spurs 18.2 %, Celtics 9.8 %, Rockets 5.9 %, Pistons 4.2 %.
 
 ---
 
-## What worked and what didn't
+## What I learned
 
-**Worked:**
-- ELO with a 100-point home-court adjustment carries the model. It captures ~35 % of total feature importance on its own and is the foundation for all downstream simulations.
-- The Best-of-7 Monte Carlo amplifies any per-game edge into a sharper series prediction. Bracket-level top-3 hit rate (75 %) is much better than per-game accuracy (65 %).
-- Walk-forward validation is a more honest performance estimate than a single train/test split — and reveals that modern NBA seasons are *harder* to predict (home advantage has shrunk from ~66 % in the 60s to ~55 % today).
+Building the model was the easy part. Evaluating it honestly turned out to be the most interesting work in the project.
 
-**Didn't (honest negative findings):**
-- **Player box-score features added almost nothing.** Old model 64.23 % → with 24 added features 64.86 %. ELO and rolling form already encode "this team scores well and protects the ball" indirectly — the box-score features were largely redundant.
-- **Star availability and strength-of-schedule features were marginal too.** Full model with 63 features tops out at 64.82 % accuracy — within noise of the 27-feature baseline. AUC and log-loss did improve modestly, so the new features made probabilities slightly more honest, just not the binary calls.
+A few things stood out.
 
-**The ceiling lesson:** team-level historical data seems to cap out around 65 % accuracy on NBA games. Breaking past it likely requires:
-- Real-time injury status and confirmed starting lineups
-- Player tracking / advanced metrics not in the box score
-- Hyperparameter tuning with proper nested CV (Optuna)
+ELO does most of the heavy lifting. A simple ELO rating with a 100-point home-court adjustment accounts for roughly 35% of total feature importance on its own. Everything else — rolling form, head-to-head, rest days — adds incremental value, but ELO alone gets you most of the way to a 65% accuracy model. A useful reminder that a well-chosen simple feature can outperform a long list of engineered ones.
+
+Walk-forward validation changes the picture. Splitting the data into one fixed train/test cut gives a single accuracy number that looks fine but hides everything interesting. Retraining the model for every season from 1960 to 2025 and predicting only the next year revealed that modern NBA seasons are noticeably harder to predict than older ones — home advantage has shrunk from ~66% in the 1960s to ~55% today, and the model has to work harder to compensate. The single-split version of this story would have missed it entirely.
+
+Adding more features did not help much. The first version of the model used 27 features (ELO, rolling form, rest, head-to-head) and reached 64.2% accuracy. Adding 24 box-score features brought it to 64.9%. Adding 12 more advanced features (star availability, strength of schedule) landed at 64.8%. The marginal accuracy was within noise, although log-loss and AUC did improve modestly — so the new features made the *probabilities* slightly more honest without changing the binary call.
+
+That last point is, I think, the real finding of the project: team-level historical data appears to cap out around 65% accuracy on NBA games. To break through that ceiling, the model probably needs the kind of information ELO and form cannot absorb — real-time injury status, confirmed starting lineups, player tracking, advanced metrics not in the box score. Those are out-of-distribution events that team-level history simply cannot predict.
+
+There is also a methodological lesson here: extending a model with more features is the obvious move, but documenting that the extensions *did not help* is more useful than spinning a 0.6 percentage-point gain as a breakthrough. Knowing where a model's ceiling lives is part of what a model actually is.
+
+If I were to push this further, the natural next steps would be hyperparameter tuning with proper nested cross-validation (Optuna), probability calibration before feeding the per-game predictions into the bracket simulator, and a player-level feature set built from injury reports and confirmed lineups.
 
 ---
 

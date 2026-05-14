@@ -1,7 +1,7 @@
 """ELO rating for NBA teams.
 
-Standard chess-style ELO with a home-court bonus. Ratings update chronologically
-so we always have the pre-game ELO available — no leakage.
+Standard chess-style ELO with a home-court bonus. I update ratings
+chronologically so the pre-game ELO is always available — no leakage.
 """
 from __future__ import annotations
 
@@ -34,12 +34,7 @@ def update(elo_winner: float, elo_loser: float, winner_was_home: bool,
 def compute_history(games: pd.DataFrame, k: float = DEFAULT_K,
                     home_adv: float = DEFAULT_HOME_ADV,
                     initial: float = INITIAL_ELO) -> pd.DataFrame:
-    """Walk through games chronologically and add pre-game ELOs.
-
-    Needs ``gameDate, hometeamId, awayteamId, homeScore, awayScore`` columns.
-    Returns the same dataframe with ``home_elo_pre``, ``away_elo_pre``, and
-    ``elo_diff`` added.
-    """
+    """Walk through games chronologically and add pre-game ELO columns."""
     games = games.sort_values('gameDate').reset_index(drop=True).copy()
     elos: dict = {}
     home_pre, away_pre = [], []
