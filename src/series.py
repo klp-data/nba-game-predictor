@@ -25,11 +25,7 @@ def series_prob_closed(p: float) -> float:
 
 def simulate_series(p_at_home: float, p_away: float, n_sim: int = 10000,
                     rng: Optional[np.random.Generator] = None) -> float:
-    """Monte Carlo Best-of-7 with NBA 2-2-1-1-1 home court.
-
-    ``p_at_home`` and ``p_away`` are the higher seed's per-game win probability
-    at home and on the road. Returns the estimated series-win probability.
-    """
+    """Monte Carlo Best-of-7 win probability with NBA 2-2-1-1-1 home court."""
     rng = rng or np.random.default_rng()
     probs = np.where(NBA_HOME_PATTERN, p_at_home, p_away)
     sims = rng.random((n_sim, 7)) < probs
