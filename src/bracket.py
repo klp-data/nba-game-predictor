@@ -1,9 +1,9 @@
-"""Playoff bracket construction and Monte-Carlo simulation.
+"""Playoff bracket construction + Monte Carlo simulation.
 
-The bracket tree is reconstructed from the actual playoff games of a season:
-- Series identified via the unordered team pair
-- Round derived from chronological order (8 R1, 4 R2, 2 R3, 1 Finals)
-- Parent series resolved using the actual winners of each lower-round series
+We rebuild the bracket tree from the actual playoff games of a season:
+series are unordered team pairs, rounds come from chronological order
+(8 R1, 4 R2, 2 R3, 1 Finals), and parent series are looked up via the
+actual winners of each lower round.
 """
 from __future__ import annotations
 
@@ -16,12 +16,10 @@ from src import series as series_mod
 
 
 def build_bracket(playoffs_for_season: pd.DataFrame) -> Optional[pd.DataFrame]:
-    """Reconstruct a season's 16-team playoff bracket.
+    """Rebuild the 16-team bracket for one season.
 
-    Required columns in ``playoffs_for_season``:
-        ``gameDate, hometeamId, awayteamId, home_win``.
-    Returns ``None`` if the bracket does not have exactly 15 series
-    (i.e., the season is not in modern 16-team format).
+    Needs ``gameDate, hometeamId, awayteamId, home_win`` columns. Returns
+    ``None`` if there aren't exactly 15 series (i.e. pre-modern format).
     """
     df = playoffs_for_season.copy()
     df['team_pair'] = df.apply(lambda r: tuple(sorted([r.hometeamId, r.awayteamId])), axis=1)
@@ -29,6 +27,7 @@ def build_bracket(playoffs_for_season: pd.DataFrame) -> Optional[pd.DataFrame]:
     series_list = []
     for pair, grp in df.groupby('team_pair'):
         if len(grp) < 3:
+            # best-of-5 and best-of-7 always have ≥3 games; skip pre-modern short series
             return None
         higher = grp.hometeamId.value_counts().idxmax()
         lower = [t for t in pair if t != higher][0]
@@ -67,13 +66,9 @@ def simulate_one(bracket_rows: list[dict], team_elos: dict,
                  fixed_winners: Optional[dict] = None) -> int:
     """Simulate one full bracket run. Returns the champion's team ID.
 
-    Parameters
-    ----------
-    bracket_rows  : Bracket as a list of dicts (uid, round, higher, lower, winner, parents).
-    team_elos     : Mapping team_id -> ELO.
-    rng           : numpy random generator.
-    fixed_winners : Optional mapping series_uid -> team_id. Pins outcomes of earlier
-                    rounds (used for conditional predictions).
+    ``bracket_rows`` is the bracket as a list of dicts (uid, round, higher,
+    lower, winner, parents). ``team_elos`` maps team_id -> ELO. ``fixed_winners``
+    pins outcomes for earlier rounds — used for conditional predictions.
     """
     winners = dict(fixed_winners or {})
     for r in bracket_rows:
@@ -98,6 +93,8 @@ def championship_probs(bracket: pd.DataFrame, team_elos: dict, n_sim: int = 1000
 
     ``start_round=1`` simulates from the pre-playoffs view. ``start_round=2`` pins the
     actual R1 winners, ``start_round=3`` pins R1+R2, and so on.
+
+    ``seed`` is fixed so runs are reproducible — pass any other int for a fresh draw.
     """
     rows = bracket[['uid', 'round', 'higher', 'lower', 'winner', 'parents']].to_dict('records')
     teams = list(team_elos.keys())
