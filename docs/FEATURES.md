@@ -138,11 +138,11 @@ Built from player data: did the team have its best players in the lineup recentl
 
 | Feature | Meaning |
 |---|---|
-| `home_top5_avail_last3` | Average number of the season's top-5 players (by total minutes) that played in the home team's last 3 games. Value between 0 and 5 |
+| `home_top5_avail_last3` | Average number of the team's top-5 minute-leaders **so far this season** (cumulative-to-date — no peeking at the future) that played in the home team's last 3 games. Value between 0 and 5 |
 | `away_top5_avail_last3` | Same for the away team |
 | `top5_avail_diff` | Who has more stars currently available? |
 
-Detects injury waves without needing explicit injury reports — when stars suddenly disappear from recent games, this value drops.
+Detects injury waves without needing explicit injury reports — when stars suddenly disappear from recent games, this value drops. Note: the first ~5 games of a season the top-5 is still settling because we only have a handful of games to rank by, so the feature is a bit noisy early in October.
 
 ---
 
@@ -162,11 +162,11 @@ XGBoost learns **interactions** between features automatically. For example:
 - A team with high `top5_avail_diff` *and* high `home_avg_margin_last_10` *and* `home_is_back_to_back=0` is heavily favored.
 - But `home_avg_margin_last_10` alone means little if `top5_avail_last3` has collapsed (stars injured).
 
-In the backtest the most important features were:
-1. `elo_diff` (clearly — relative team strength)
+Roughly speaking, in the NB_06 backtest the heavy hitters were:
+1. `elo_diff` (clearly — relative team strength, ~35% of total importance on its own)
 2. `margin_diff_20` (medium-term form difference)
-3. `home_top5_avail_last3` (injury status)
+3. `home_top5_avail_last3` (injury proxy)
 4. `sos_adj_margin_last10_diff` (quality-adjusted form)
 5. `home_top3_pm_roll10` (star plus/minus)
 
-ELO carries by far the most explanatory weight — everything else is refinement on top of it.
+The exact ranking moves a bit between runs (random seed, exact feature set), but ELO is always #1 by a wide margin — everything else is refinement on top of it.

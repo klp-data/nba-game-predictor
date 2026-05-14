@@ -71,28 +71,29 @@ Average probability assigned to the actual champion: 34 % pre-playoffs → 37 % 
 ### Live: 2025–26 playoffs (R1 in progress)
 ![Live 2026](docs/live_2026.png)
 
-Current top picks (top-16 by ELO seeded into a standard bracket):
-Thunder 47.6 %, Spurs 18.2 %, Celtics 9.8 %, Rockets 5.9 %, Pistons 4.2 %.
+Current top picks (using the **real** R1 matchups + current series scores, then re-seeding by ELO for R2+):
+Thunder 58.5 %, Spurs 21.6 %, Celtics 11.2 %, Pistons 3.2 %, Cavaliers 1.7 %.
+Thunder jumped after going up 3-0 vs the Suns — once a team is one win away in a best-of-7, the conditional probability tilts hard.
 
 ---
 
 ## What I learned
 
-Building the model was the easy part. Evaluating it honestly turned out to be the most interesting work in the project.
+Honestly, building the model was the easy part. Evaluating it without lying to myself turned out to be the more interesting work.
 
-A few things stood out.
+A few things stuck out:
 
-ELO does most of the heavy lifting. A simple ELO rating with a 100-point home-court adjustment accounts for roughly 35% of total feature importance on its own. Everything else — rolling form, head-to-head, rest days — adds incremental value, but ELO alone gets you most of the way to a 65% accuracy model. A useful reminder that a well-chosen simple feature can outperform a long list of engineered ones.
+**ELO does most of the heavy lifting.** A simple ELO rating with a 100-point home-court adjustment accounts for roughly 35% of total feature importance on its own. Everything else — rolling form, head-to-head, rest days — adds incremental value, but ELO alone gets you most of the way to a 65% accuracy model. A useful reminder that a well-chosen simple feature can outperform a long list of engineered ones.
 
-Walk-forward validation changes the picture. Splitting the data into one fixed train/test cut gives a single accuracy number that looks fine but hides everything interesting. Retraining the model for every season from 1960 to 2025 and predicting only the next year revealed that modern NBA seasons are noticeably harder to predict than older ones — home advantage has shrunk from ~66% in the 1960s to ~55% today, and the model has to work harder to compensate. The single-split version of this story would have missed it entirely.
+**Walk-forward validation changed the picture.** Splitting the data into one fixed train/test cut gives a single accuracy number that looks fine but hides everything interesting. Retraining the model for every season from 1960 to 2025 and predicting only the next year revealed that modern NBA seasons are noticeably harder to predict than older ones — home advantage has shrunk from ~66% in the 1960s to ~55% today, and the model has to work harder to compensate. The single-split version of this story would have missed it entirely.
 
-Adding more features did not help much. The first version of the model used 27 features (ELO, rolling form, rest, head-to-head) and reached 64.2% accuracy. Adding 24 box-score features brought it to 64.9%. Adding 12 more advanced features (star availability, strength of schedule) landed at 64.8%. The marginal accuracy was within noise, although log-loss and AUC did improve modestly — so the new features made the *probabilities* slightly more honest without changing the binary call.
+**Adding more features did not help much.** The first version of the model used 27 features (ELO, rolling form, rest, head-to-head) and reached 64.2% accuracy. Adding 24 box-score features brought it to 64.9%. Adding 12 more advanced features (star availability, strength of schedule) landed at 64.8%. Pretty much within noise on accuracy — though log-loss and AUC did improve a bit. So the new features made the *probabilities* slightly more honest without changing the binary call.
 
-That last point is, I think, the real finding of the project: team-level historical data appears to cap out around 65% accuracy on NBA games. To break through that ceiling, the model probably needs the kind of information ELO and form cannot absorb — real-time injury status, confirmed starting lineups, player tracking, advanced metrics not in the box score. Those are out-of-distribution events that team-level history simply cannot predict.
+That last point is, I think, the real finding of the project: team-level historical data caps out somewhere around 65% accuracy. To break through that, the model probably needs the kind of stuff ELO and form just cannot absorb — real-time injury status, confirmed starting lineups, player tracking, advanced metrics not in the box score. Those are basically out-of-distribution events that team-level history can't predict.
 
-There is also a methodological lesson here: extending a model with more features is the obvious move, but documenting that the extensions *did not help* is more useful than spinning a 0.6 percentage-point gain as a breakthrough. Knowing where a model's ceiling lives is part of what a model actually is.
+There's also a methodological thing here: extending a model with more features is the obvious move, but documenting that the extensions *did not help* is actually more useful than spinning a 0.6 percentage-point gain as a breakthrough. Knowing where the ceiling is is part of knowing what the model is.
 
-If I were to push this further, the natural next steps would be hyperparameter tuning with proper nested cross-validation (Optuna), probability calibration before feeding the per-game predictions into the bracket simulator, and a player-level feature set built from injury reports and confirmed lineups.
+If I were to push this further the natural next steps would be hyperparameter tuning with proper nested CV (Optuna), probability calibration before feeding the per-game predictions into the bracket simulator, and a real player-level feature set built from injury reports and confirmed lineups. NB_11 is a first stab at the first two of those.
 
 ---
 

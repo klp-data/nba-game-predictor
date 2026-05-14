@@ -162,12 +162,15 @@ def conditional_confidence():
 
 # -------------------------------------------------------------------------- e)
 def live_2026():
-    """docs/live_2026.png — top-16 championship probabilities for the 2025-26 season."""
+    """docs/live_2026.png — championship probabilities for the 2025-26 season using
+    the REAL R1 matchups + current series scores (mirrors notebook 10)."""
+    from src import elo as elo_mod
+
     df = pd.read_parquet(DATA / "games_with_advanced_features.parquet")
     season = 2025
-    playoffs = df[(df.season == season) & (df.gameType == "Playoffs")]
+    playoffs = df[(df.season == season) & (df.gameType == "Playoffs")].copy()
 
-    # Pre-playoff ELO per team = each team's first ELO observed in playoffs
+    # pre-playoff ELO per team = each team's first ELO observed in playoffs
     home_v = playoffs[["gameDate", "hometeamId", "home_elo_pre"]].rename(
         columns={"hometeamId": "t", "home_elo_pre": "e"})
     away_v = playoffs[["gameDate", "awayteamId", "away_elo_pre"]].rename(
@@ -176,7 +179,7 @@ def live_2026():
                  .sort_values(["t", "gameDate"])
                  .groupby("t").first()["e"])
 
-    # Most recent team name per ID
+    # most recent team name per ID
     names = (pd.concat([
         df[["gameDate", "hometeamId", "hometeamName"]].rename(
             columns={"hometeamId": "t", "hometeamName": "n"}),
@@ -185,34 +188,56 @@ def live_2026():
     ]).sort_values("gameDate").drop_duplicates("t", keep="last")
        .set_index("t")["n"])
 
-    top16 = preplay.sort_values(ascending=False).head(16)
-    elos = top16.to_dict()
-    team_ids = list(top16.index)
+    # rebuild the REAL R1 matchups from playoff games, with current scores
+    playoffs["team_pair"] = playoffs.apply(
+        lambda r: tuple(sorted([r.hometeamId, r.awayteamId])), axis=1)
 
-    # Standard 1v8 / 4v5 / 2v7 / 3v6 bracket (×2 for both conferences)
-    seed_matchups = [(0, 7), (3, 4), (1, 6), (2, 5),
-                     (8, 15), (11, 12), (9, 14), (10, 13)]
+    round1_state = []
+    for pair, grp in playoffs.groupby("team_pair"):
+        higher = grp.hometeamId.value_counts().idxmax()
+        lower = [t for t in pair if t != higher][0]
+        wins_h = ((grp.hometeamId == higher) & (grp.home_win == 1)).sum() + \
+                 ((grp.awayteamId == higher) & (grp.home_win == 0)).sum()
+        wins_l = len(grp) - wins_h
+        round1_state.append((higher, lower, int(wins_h), int(wins_l)))
+    # sort by higher-seed ELO so the bracket ordering is stable
+    round1_state.sort(key=lambda p: -float(preplay.get(p[0], 1500)))
+
+    elos = {t: float(preplay.get(t, 1500)) for pair in round1_state for t in pair[:2]}
+    HOME_PATTERN = series.NBA_HOME_PATTERN
+
+    def sim_from_state(higher_elo, lower_elo, wh, wl, rng):
+        if wh >= 4: return True
+        if wl >= 4: return False
+        game_idx = wh + wl
+        for is_high_home in HOME_PATTERN[game_idx:]:
+            p = elo_mod.win_prob(higher_elo, lower_elo, is_home=bool(is_high_home))
+            if rng.random() < p: wh += 1
+            else:                wl += 1
+            if wh == 4: return True
+            if wl == 4: return False
+        return wh > wl
 
     rng = np.random.default_rng(42)
-    counts = {t: 0 for t in team_ids}
+    counts = {t: 0 for t in elos}
     n_sim = 10000
     for _ in range(n_sim):
-        r1 = [(ta if series.simulate_b07_elo(elos[ta], elos[tb], rng=rng) else tb)
-              for ta, tb in [(team_ids[hi], team_ids[lo]) for hi, lo in seed_matchups]]
-        r2 = []
-        for i in range(0, 8, 2):
-            ta, tb = r1[i], r1[i + 1]
-            h, l = (ta, tb) if elos[ta] >= elos[tb] else (tb, ta)
-            r2.append(h if series.simulate_b07_elo(elos[h], elos[l], rng=rng) else l)
-        r3 = []
-        for i in range(0, 4, 2):
-            ta, tb = r2[i], r2[i + 1]
-            h, l = (ta, tb) if elos[ta] >= elos[tb] else (tb, ta)
-            r3.append(h if series.simulate_b07_elo(elos[h], elos[l], rng=rng) else l)
-        ta, tb = r3
-        h, l = (ta, tb) if elos[ta] >= elos[tb] else (tb, ta)
-        champ = h if series.simulate_b07_elo(elos[h], elos[l], rng=rng) else l
-        counts[champ] += 1
+        # R1: condition on current state
+        r1_winners = [
+            (higher if sim_from_state(elos[higher], elos[lower], wh, wl, rng) else lower)
+            for higher, lower, wh, wl in round1_state
+        ]
+        # R2+: re-seed by ELO and pair best-vs-worst
+        bracket_round = r1_winners
+        while len(bracket_round) > 1:
+            ranked = sorted(bracket_round, key=lambda t: -elos[t])
+            nxt = []
+            for i in range(len(ranked) // 2):
+                a, b = ranked[i], ranked[-(i + 1)]
+                h, l = (a, b) if elos[a] >= elos[b] else (b, a)
+                nxt.append(h if series.simulate_b07_elo(elos[h], elos[l], rng=rng) else l)
+            bracket_round = nxt
+        counts[bracket_round[0]] += 1
 
     probs = (pd.Series({names.get(t, str(t)): c / n_sim for t, c in counts.items()})
                .sort_values())
@@ -223,8 +248,8 @@ def live_2026():
         colors[-1] = plot_style.COLORS["secondary"]  # highlight top pick
     ax.barh(probs.index, probs.values, color=colors)
     ax.set_xlabel("P(Championship)")
-    ax.set_title(f"2025–26 NBA championship probabilities — top-16 by ELO\n"
-                 f"(as of {playoffs.gameDate.max().date()}, R1 in progress)")
+    ax.set_title(f"2025-26 NBA championship probabilities — real R1 matchups\n"
+                 f"(as of {playoffs.gameDate.max().date()}, conditional on current series scores)")
     for i, v in enumerate(probs.values):
         ax.text(v + 0.005, i, f"{v:.1%}", va="center", fontsize=9)
     ax.set_xlim(0, max(probs.values) * 1.18)
