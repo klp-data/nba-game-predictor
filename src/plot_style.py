@@ -1,12 +1,10 @@
-"""Publication-ready matplotlib style.
+"""Project-wide matplotlib style.
 
-Usage:
     from src.plot_style import apply
     apply()
 
-Optional: ``apply(use_tex=True)`` switches to true LaTeX rendering, provided a
-LaTeX installation is available on the system (otherwise it falls back to
-matplotlib's mathtext).
+``apply(use_tex=True)`` switches to real LaTeX rendering — needs a LaTeX
+install on the system, otherwise matplotlib falls back to mathtext.
 """
 from __future__ import annotations
 
@@ -25,7 +23,7 @@ PALETTE = ['#1f77b4', '#f93414', '#57A048']
 
 
 def apply(use_tex: bool = False) -> None:
-    """Apply a clean, publication-ready matplotlib style."""
+    """Apply the project's matplotlib style."""
     plt.rcdefaults()
     mpl.rcParams.update({
         'font.family':       'serif',

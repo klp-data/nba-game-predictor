@@ -1,10 +1,8 @@
 """Best-of-7 series win probabilities.
 
-Two ways to compute them:
 - ``series_prob_closed(p)`` — closed form (no home-court adjustment)
 - ``simulate_series(...)`` — Monte Carlo with the NBA 2-2-1-1-1 home pattern
-- ``simulate_b07_elo(...)`` — Convenience wrapper: pass two ELOs and it figures
-  out the per-game win probability for you.
+- ``simulate_b07_elo(...)`` — same idea but you pass two ELOs instead of probs
 """
 from __future__ import annotations
 
@@ -27,17 +25,10 @@ def series_prob_closed(p: float) -> float:
 
 def simulate_series(p_at_home: float, p_away: float, n_sim: int = 10000,
                     rng: Optional[np.random.Generator] = None) -> float:
-    """Monte-Carlo Best-of-7 with the NBA 2-2-1-1-1 home pattern.
+    """Monte Carlo Best-of-7 with NBA 2-2-1-1-1 home court.
 
-    Parameters
-    ----------
-    p_at_home : Per-game probability that the higher seed wins when at home.
-    p_away    : Same, when the higher seed is on the road.
-    n_sim     : Number of simulations.
-
-    Returns
-    -------
-    Estimated probability that the higher seed wins the series.
+    ``p_at_home`` and ``p_away`` are the higher seed's per-game win probability
+    at home and on the road. Returns the estimated series-win probability.
     """
     rng = rng or np.random.default_rng()
     probs = np.where(NBA_HOME_PATTERN, p_at_home, p_away)
@@ -56,10 +47,7 @@ def simulate_series(p_at_home: float, p_away: float, n_sim: int = 10000,
 def simulate_b07_elo(higher_elo: float, lower_elo: float,
                      home_adv: float = elo_mod.DEFAULT_HOME_ADV,
                      rng: Optional[np.random.Generator] = None) -> bool:
-    """Single Best-of-7 simulation driven entirely by ELO.
-
-    Returns ``True`` iff the higher seed wins the series.
-    """
+    """One ELO-driven Best-of-7 simulation. Returns True if the higher seed wins."""
     rng = rng or np.random.default_rng()
     wh = wl = 0
     for is_high_home in NBA_HOME_PATTERN:
