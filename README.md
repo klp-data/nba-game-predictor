@@ -99,7 +99,19 @@ If I were to push this further the natural next steps would be hyperparameter tu
 
 ## Tech stack
 
-`Python` · `pandas` · `numpy` · `XGBoost` · `scikit-learn` · `matplotlib` · `seaborn` · `pyarrow` · `joblib`
+`Python` · `pandas` · `numpy` · `XGBoost` · `scikit-learn` · `matplotlib` · `seaborn` · `pyarrow` · `joblib` · `streamlit` · `shap`
+
+---
+
+## Interactive demo
+
+A small Streamlit app to play with the model. Pick any two NBA teams, see the predicted win probability + a SHAP bar chart of which features pushed the prediction that way.
+
+```bash
+streamlit run Demo.py
+```
+
+Opens at `http://localhost:8501`. Loads the trained XGBoost model from `models/xgb_baseline.pkl` — no training needed.
 
 ---
 
