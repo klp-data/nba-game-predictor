@@ -81,7 +81,6 @@ def bo7_amplifier():
                     xytext=(8, -14), textcoords="offset points", fontsize=10)
     ax.set_xlabel("Per-game win probability")
     ax.set_ylabel("Series win probability")
-    ax.set_title("Best-of-7 amplifies any per-game edge")
     ax.legend(loc="lower right")
     plt.tight_layout()
     fig.savefig(DOCS / "bo7_amplifier.png", **SAVE_KW)
@@ -98,7 +97,7 @@ def bracket_backtest():
 
     axes[0].hist(bt.actual_champ_rank, bins=range(1, 18),
                  color=plot_style.COLORS["primary"], edgecolor="white")
-    axes[0].set_title("Where did the actual champion land in our picks?")
+    axes[0].set_title("real champion's rank")
     axes[0].set_xlabel("Rank in model's top list")
     axes[0].set_ylabel("Number of seasons")
 
@@ -106,7 +105,7 @@ def bracket_backtest():
                  color=plot_style.COLORS["secondary"])
     axes[1].axhline(1 / 16, color=plot_style.COLORS["neutral"], linestyle="--",
                     label="random (1/16)")
-    axes[1].set_title("Model probability for the eventual champion (pre-playoffs)")
+    axes[1].set_title("P assigned to real champion")
     axes[1].set_xlabel("Season")
     axes[1].set_ylabel("P(championship)")
     axes[1].legend()
@@ -138,7 +137,7 @@ def conditional_confidence():
                  color=plot_style.COLORS["accent"], label="Top-3 hit rate")
     axes[0].set_ylim(0, 1.05)
     axes[0].set_ylabel("Hit rate")
-    axes[0].set_title("Hit rate by starting knowledge level")
+    axes[0].set_title("hit rate")
     axes[0].legend()
     for col in [summary.top1, summary.top3]:
         for i, v in enumerate(col):
@@ -149,7 +148,7 @@ def conditional_confidence():
                  color=plot_style.COLORS["secondary"])
     axes[1].set_ylim(0, 1.05)
     axes[1].set_ylabel("Avg P(actual champion)")
-    axes[1].set_title("Average probability assigned to the actual champion")
+    axes[1].set_title("avg P for the real champion")
     for i, v in enumerate(summary.avg_p):
         axes[1].annotate(f"{v:.0%}", (i, v), textcoords="offset points",
                          xytext=(0, 8), ha="center", fontsize=9)
@@ -248,8 +247,7 @@ def live_2026():
         colors[-1] = plot_style.COLORS["secondary"]  # highlight top pick
     ax.barh(probs.index, probs.values, color=colors)
     ax.set_xlabel("P(Championship)")
-    ax.set_title(f"2025-26 NBA championship probabilities — real R1 matchups\n"
-                 f"(as of {playoffs.gameDate.max().date()}, conditional on current series scores)")
+    ax.set_title("2025/26 NBA championship probabilities")
     for i, v in enumerate(probs.values):
         ax.text(v + 0.005, i, f"{v:.1%}", va="center", fontsize=9)
     ax.set_xlim(0, max(probs.values) * 1.18)
