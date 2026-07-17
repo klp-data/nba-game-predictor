@@ -77,7 +77,7 @@ def bo7_amplifier():
     for px in [0.55, 0.60, 0.65, 0.70]:
         py = series.series_prob_closed(px)
         ax.scatter([px], [py], color=plot_style.COLORS["secondary"], zorder=5, s=42)
-        ax.annotate(f"{px:.0%} -> {py:.0%}", xy=(px, py),
+        ax.annotate(rf"{px:.0%} $\rightarrow$ {py:.0%}", xy=(px, py),
                     xytext=(8, -14), textcoords="offset points", fontsize=10)
     ax.set_xlabel("Per-game win probability")
     ax.set_ylabel("Series win probability")
@@ -97,7 +97,7 @@ def bracket_backtest():
 
     axes[0].hist(bt.actual_champ_rank, bins=range(1, 18),
                  color=plot_style.COLORS["primary"], edgecolor="white")
-    axes[0].set_title("real champion's rank")
+    axes[0].set_title("Real champion's rank")
     axes[0].set_xlabel("Rank in model's top list")
     axes[0].set_ylabel("Number of seasons")
 
@@ -105,7 +105,7 @@ def bracket_backtest():
                  color=plot_style.COLORS["secondary"])
     axes[1].axhline(1 / 16, color=plot_style.COLORS["neutral"], linestyle="--",
                     label="random (1/16)")
-    axes[1].set_title("P assigned to real champion")
+    axes[1].set_title("P assigned to the real champion")
     axes[1].set_xlabel("Season")
     axes[1].set_ylabel("P(championship)")
     axes[1].legend()
@@ -137,7 +137,7 @@ def conditional_confidence():
                  color=plot_style.COLORS["accent"], label="Top-3 hit rate")
     axes[0].set_ylim(0, 1.05)
     axes[0].set_ylabel("Hit rate")
-    axes[0].set_title("hit rate")
+    axes[0].set_title("Hit rate")
     axes[0].legend()
     for col in [summary.top1, summary.top3]:
         for i, v in enumerate(col):
@@ -148,7 +148,7 @@ def conditional_confidence():
                  color=plot_style.COLORS["secondary"])
     axes[1].set_ylim(0, 1.05)
     axes[1].set_ylabel("Avg P(actual champion)")
-    axes[1].set_title("avg P for the real champion")
+    axes[1].set_title("Avg. P for the real champion")
     for i, v in enumerate(summary.avg_p):
         axes[1].annotate(f"{v:.0%}", (i, v), textcoords="offset points",
                          xytext=(0, 8), ha="center", fontsize=9)
