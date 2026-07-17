@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parent
 DATA = ROOT / "data" / "processed"
 MODELS = ROOT / "models"
 
-st.set_page_config(page_title="NBA Game Predictor", page_icon="🏀", layout="wide")
+st.set_page_config(page_title="NBA Game Predictor", layout="centered")
 
 
 # --- model + data ------------------------------------------------------------
@@ -149,8 +149,8 @@ def get_explainer(_model):
 
 
 # --- UI ----------------------------------------------------------------------
-st.title("🏀 NBA Game Predictor")
-st.caption("Pick two teams, see the model's call. The big bar chart shows which features pushed the prediction.")
+st.title("NBA Game Predictor")
+st.caption("Pick two teams, see the model's call. The bar chart shows which features pushed the prediction.")
 
 # Sidebar
 with st.sidebar:
@@ -170,8 +170,8 @@ with st.sidebar:
 # Main pickers
 team_names = sorted(team_map.keys())
 col_h, col_a = st.columns(2)
-home_name = col_h.selectbox("🏠 Home team", team_names, index=team_names.index("Celtics") if "Celtics" in team_names else 0)
-away_name = col_a.selectbox("🛫 Away team", team_names, index=team_names.index("Lakers") if "Lakers" in team_names else 1)
+home_name = col_h.selectbox("Home team", team_names, index=team_names.index("Celtics") if "Celtics" in team_names else 0)
+away_name = col_a.selectbox("Away team", team_names, index=team_names.index("Lakers") if "Lakers" in team_names else 1)
 
 # Optional rest days
 with st.expander("Tweak rest days (advanced)"):
@@ -229,14 +229,22 @@ contribs = pd.DataFrame({
     "value": X.iloc[0].values,
 }).assign(abs_shap=lambda d: d.shap.abs()).sort_values("abs_shap", ascending=True).tail(10)
 
-fig, ax = plt.subplots(figsize=(8, 5))
-colors = ["#1f77b4" if s > 0 else "#f93414" for s in contribs.shap]
-labels = [f"{f}  =  {v:.2f}" for f, v in zip(contribs.feature, contribs.value)]
-ax.barh(labels, contribs.shap, color=colors)
-ax.axvline(0, color="gray", linewidth=0.8)
-ax.set_xlabel("SHAP value (→ home win)")
-ax.set_title(f"Top 10 contributors to: {home_name} vs {away_name}")
-plt.tight_layout()
+# dark, matches the .streamlit theme
+with plt.rc_context({"font.family": "monospace", "text.color": "#d5d9e0",
+                     "axes.edgecolor": "#3a3f4a", "xtick.color": "#9aa0aa",
+                     "ytick.color": "#d5d9e0"}):
+    fig, ax = plt.subplots(figsize=(7, 3.8))
+    fig.patch.set_facecolor("#0a0c10")
+    ax.set_facecolor("#0a0c10")
+    colors = ["#4c9be8" if s > 0 else "#f2545b" for s in contribs.shap]
+    labels = [f"{f} = {v:.2f}" for f, v in zip(contribs.feature, contribs.value)]
+    ax.barh(labels, contribs.shap, color=colors)
+    ax.axvline(0, color="#9aa0aa", linewidth=0.8)
+    ax.spines[["top", "right"]].set_visible(False)
+    ax.tick_params(labelsize=8)
+    ax.set_xlabel("SHAP value (→ home win)", fontsize=9)
+    ax.set_title(f"Top 10 contributors: {home_name} vs {away_name}", fontsize=10)
+    plt.tight_layout(pad=1.2)
 st.pyplot(fig)
 
 
