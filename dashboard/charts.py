@@ -115,3 +115,94 @@ def elo_bars(home_name: str, home_elo: float, away_name: str, away_elo: float) -
                      showgrid=False)
     fig.update_yaxes(automargin=True)
     return style(fig, height=130)
+
+
+# --- playoffs ----------------------------------------------------------------
+STATE_COLS = ["p_pre", "p_after_r1", "p_after_r2", "p_after_r3"]
+STATE_LABELS = ["Before playoffs", "After R1", "After R2", "After conf. finals"]
+ROUND_LABELS = {1: "Lost in round 1", 2: "Lost in round 2", 3: "Lost conf. finals",
+                4: "Lost the finals", 5: "Champion"}
+P_FLOOR = 1e-4      # left edge of the log axis, for teams that never won a sim
+
+
+def season_label(season: int) -> str:
+    """2025 becomes 2025-26. Seasons are stored by their starting year."""
+    return f"{season}-{str(season + 1)[-2:]}"
+
+
+def playoff_pre_bars(odds: pd.DataFrame) -> go.Figure:
+    """Championship probability before round 1, all 16 teams, champion in red."""
+    from src.plot_style import COLORS as C
+    d = odds.sort_values("p_pre")
+    colors = [C["secondary"] if champ else C["primary"] for champ in d.is_champion]
+    fig = go.Figure(go.Bar(
+        x=d.p_pre, y=d.team, orientation="h", marker_color=colors,
+        text=[f"{p:.1%}" for p in d.p_pre], textposition="outside", cliponaxis=False,
+        hovertemplate="%{y}<br>%{x:.2%} before round 1<extra></extra>",
+    ))
+    fig.update_xaxes(range=[0, d.p_pre.max() * 1.18])
+    fig.update_yaxes(automargin=True)
+    percent_axis(fig)
+    return style(fig, height=520)
+
+
+def playoff_paths(odds: pd.DataFrame) -> go.Figure:
+    """How the odds moved for the teams that got out of round 1."""
+    import team_colors
+    fig = go.Figure()
+    for row in odds[odds.round_reached >= 2].sort_values("p_pre", ascending=False).itertuples():
+        values = [getattr(row, c) for c in STATE_COLS]
+        fig.add_trace(go.Scatter(
+            x=STATE_LABELS, y=values, mode="lines+markers", name=row.team,
+            line=dict(color=team_colors.color(row.franchise),
+                      width=3.5 if row.is_champion else 1.6),
+            marker=dict(size=9 if row.is_champion else 6),
+            hovertemplate=f"{row.team}<br>%{{x}}<br>%{{y:.1%}}<extra></extra>",
+        ))
+    percent_axis(fig, axis="y")
+    fig.update_yaxes(rangemode="tozero")
+    return style(fig, height=440, legend=True)
+
+
+def playoff_outcome_scatter(odds: pd.DataFrame, title: str | None = None) -> go.Figure:
+    """What the model said against what happened, for all 16 teams.
+
+    The x axis is log scaled because the probabilities span three orders of
+    magnitude, and teams that never won a single simulation are pinned to the
+    left edge instead of disappearing. Points at the same outcome are nudged
+    apart vertically so the labels stay readable.
+    """
+    from src.plot_style import COLORS as C
+    d = odds.copy()
+    d["x"] = d.p_pre.clip(lower=P_FLOOR)
+    d["y"] = d.round_reached.astype(float)
+    for reached, grp in d.groupby("round_reached"):
+        order = grp.p_pre.rank(method="first") - 1
+        step = min(0.13, 0.5 / max(len(grp) - 1, 1))     # keep the group inside its band
+        d.loc[grp.index, "y"] += (order - (len(grp) - 1) / 2) * step
+
+    fig = go.Figure()
+    for is_champ, grp in d.groupby("is_champion"):
+        fig.add_trace(go.Scatter(
+            x=grp.x, y=grp.y, mode="markers+text", text=grp.team,
+            textposition="middle right", textfont=dict(size=11),
+            marker=dict(size=14 if is_champ else 9,
+                        color=C["secondary"] if is_champ else C["primary"]),
+            customdata=grp[["p_pre", "round_reached"]],
+            hovertemplate=("%{text}<br>%{customdata[0]:.2%} before round 1"
+                           "<extra></extra>"),
+            showlegend=False,
+        ))
+    # ticks by hand: a percent format on a log axis prints 0.01 % and 0.02 % as
+    # the same 0.0 % three times over
+    fig.update_xaxes(type="log", title_text="P(title) before round 1",
+                     range=[-4.2, 0.15],
+                     tickmode="array",
+                     tickvals=[1e-4, 1e-3, 1e-2, 1e-1, 1],
+                     ticktext=["0.01 %", "0.1 %", "1 %", "10 %", "100 %"])
+    fig.update_yaxes(tickmode="array", tickvals=list(ROUND_LABELS),
+                     ticktext=list(ROUND_LABELS.values()), range=[0.4, 5.6],
+                     automargin=True)
+    if title:
+        fig.update_layout(title=dict(text=title, x=0, font=dict(size=15)))
+    return style(fig, height=460, top_margin=60 if title else 10)

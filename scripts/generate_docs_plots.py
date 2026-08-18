@@ -257,6 +257,25 @@ def live_2026():
     print("  -> live_2026.png")
 
 
+# -------------------------------------------------------------------------- f)
+def playoffs_2026():
+    """docs/playoffs_2026.png — the Playoffs page's third card, for the README.
+
+    Plotly rather than matplotlib, because it is the same figure the dashboard
+    draws. Needs kaleido installed for the static export.
+    """
+    sys.path.insert(0, str(ROOT / "dashboard"))
+    import charts
+
+    odds = pd.read_parquet(ROOT / "dashboard" / "data" / "playoff_odds.parquet")
+    season = 2025                       # the 2026 playoffs
+    fig = charts.playoff_outcome_scatter(
+        odds[odds.season == season],
+        title="2026 playoffs: title odds before round 1 against how far teams got")
+    fig.write_image(DOCS / "playoffs_2026.png", width=1100, height=560, scale=2)
+    print("  -> playoffs_2026.png")
+
+
 if __name__ == "__main__":
     print("Generating docs/ PNGs...")
     walk_forward()
@@ -264,4 +283,5 @@ if __name__ == "__main__":
     bracket_backtest()
     conditional_confidence()
     live_2026()
+    playoffs_2026()
     print("Done.")
