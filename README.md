@@ -73,7 +73,7 @@ Average probability assigned to the eventual champion: 33 % before the playoffs,
 
 Before round 1 the model had the Thunder at 49.8 %, Spurs 17.3 %, Celtics 15.0 %. The Knicks were seventh at 2.2 %. The Knicks won the title.
 
-The top two picks met in the West finals and the series went to seven games, so the model was not far off there. It missed the Knicks. They went in as a third seed with a pre-playoff ELO of 1630, rank 7 by ELO, and then won thirteen playoff games in a row. ELO with K=20 needs a few weeks to catch up to a run like that, and the playoffs are over before it does. This is the limit of team-level history in one season: it knows who was good, not who just got better.
+The top two picks did play each other in the West finals and it went to game 7, so this part was basically right. The Knicks the model did not see coming at all. Third seed, ELO 1630, only seventh in the league by rating. Then they just won 13 playoff games in a row. ELO moves only a few points per game, K=20 means max 20 points per win. So it takes time to represent such a run. This is pretty much the limit of team-level history in one season. The model knows who was good. It has no idea who just got hot.
 
 ## What I learned
 
