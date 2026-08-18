@@ -93,3 +93,40 @@ def championship_probs(bracket: pd.DataFrame, team_elos: dict, n_sim: int = 1000
         champ = simulate_one(rows, team_elos, rng, fixed_winners=pre_winners)
         counts[champ] += 1
     return {t: c / n_sim for t, c in counts.items()}
+
+
+def pre_playoff_elos(playoffs_for_season: pd.DataFrame) -> dict:
+    """Each team's ELO going into the playoffs, as a ``{teamId: elo}`` dict.
+
+    A team's pre-playoff rating is the pre-game ELO of its first playoff game,
+    which is the last rating it carried out of the regular season. Lifted out of
+    the notebook cells in NB08/NB09, where the same thing is done with a
+    groupby-first on a stacked home/away view.
+    """
+    home = playoffs_for_season[['gameDate', 'hometeamId', 'home_elo_pre']].rename(
+        columns={'hometeamId': 'teamId', 'home_elo_pre': 'elo'})
+    away = playoffs_for_season[['gameDate', 'awayteamId', 'away_elo_pre']].rename(
+        columns={'awayteamId': 'teamId', 'away_elo_pre': 'elo'})
+    stacked = pd.concat([home, away], ignore_index=True).sort_values(['teamId', 'gameDate'])
+    first = stacked.groupby('teamId', as_index=False).first()
+    return {int(r.teamId): float(r.elo) for r in first.itertuples(index=False)}
+
+
+def conference_halves(bracket: pd.DataFrame) -> tuple[set, set]:
+    """The two halves of the bracket, as sets of team IDs.
+
+    A 16-team bracket splits into two conferences at the two round-3 series, so
+    everything feeding a conference final belongs to that conference. Which half
+    is East and which is West is not in the data — that mapping happens in the
+    caller.
+    """
+    by_uid = {r['uid']: r for r in bracket.to_dict('records')}
+
+    def teams_below(uid):
+        row = by_uid[uid]
+        if row['round'] == 1:
+            return {row['higher'], row['lower']}
+        return set().union(*(teams_below(p) for p in row['parents']))
+
+    finals = bracket[bracket['round'] == 4].iloc[0]
+    return tuple(teams_below(p) for p in finals['parents'])
