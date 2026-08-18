@@ -202,7 +202,7 @@ def build_champions(games: pd.DataFrame, franchises: pd.Series) -> pd.DataFrame:
     """Champion and runner-up per season, from the last playoff game played.
 
     Names are franchise names, not era names, because the ELO explorer marks
-    title seasons for a franchise the user picked from a list of current teams.
+    title seasons against franchises picked from a list of current teams.
     """
     playoffs = games[games.gameType == "Playoffs"]
     rows = []
