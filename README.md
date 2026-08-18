@@ -127,4 +127,4 @@ jupyter notebook notebooks/
 # Run 01 -> 10 in order
 ```
 
-Dataset: [Historical NBA Data and Player Box Scores](https://www.kaggle.com/datasets/eoinamoore/historical-nba-data-and-player-box-scores) on Kaggle (Eoin Moore). Roughly 73,000 games and 1.6 M player box-score rows, 1946 to today.
+Dataset: [Historical NBA Data and Player Box Scores](https://www.kaggle.com/datasets/eoinamoore/historical-nba-data-and-player-box-scores) on Kaggle (Eoin Moore).
