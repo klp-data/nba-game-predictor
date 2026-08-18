@@ -57,13 +57,13 @@ A 60 % per-game probability becomes roughly 71 % over a best-of-7 series. This i
 
 ![Bracket backtest](docs/bracket_backtest.png)
 
-Across 40 backtested seasons (1983–2024), the actual NBA champion was the model's top pick 52.5 % of the time and within the top 3 picks 75 % of the time. The random baseline is 6.25 %.
+Across 41 backtested seasons (1983–2025), the actual NBA champion was the model's top pick 51.2 % of the time and within the top 3 picks 73.2 % of the time. The random baseline is 6.25 %.
 
 ### Confidence evolves through the playoffs
 
 ![Conditional confidence](docs/conditional_confidence.png)
 
-Average probability assigned to the eventual champion: 34 % before the playoffs, 37 % after round 1, 45 % after the conference semis, 66 % in the finals. Most of the uncertainty lives in round 1. Once the final eight are set, the model gets much sharper.
+Average probability assigned to the eventual champion: 33 % before the playoffs, 36 % after round 1, 44 % after the conference semis, 65 % in the finals. Most of the uncertainty lives in round 1. Once the final eight are set, the model gets much sharper.
 
 ### 2026 playoffs: what the model said, and what happened
 

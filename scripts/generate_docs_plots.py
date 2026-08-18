@@ -20,6 +20,7 @@ sys.path.insert(0, str(ROOT))
 from src import bracket, plot_style, series  # noqa: E402
 
 DATA = ROOT / "data" / "processed"
+DASH_DATA = ROOT / "dashboard" / "data"
 DOCS = ROOT / "docs"
 DOCS.mkdir(exist_ok=True)
 
@@ -89,19 +90,35 @@ def bo7_amplifier():
 
 
 # -------------------------------------------------------------------------- c)
+def _champion_ranks():
+    """Per season: where the real champion sat in the model's list, and its odds.
+
+    Reads dashboard/data/playoff_odds.parquet rather than the notebook 08 output,
+    so this covers 41 seasons including 2026 and agrees with the dashboard.
+    """
+    odds = pd.read_parquet(DASH_DATA / "playoff_odds.parquet")
+    out = {}
+    for col in ["p_pre", "p_after_r1", "p_after_r2", "p_after_r3"]:
+        ranked = odds.assign(rank=odds.groupby("season")[col].rank(ascending=False,
+                                                                  method="first"))
+        champs = ranked[ranked.is_champion].sort_values("season")
+        out[col] = champs[["season", "rank", col]].rename(columns={col: "p"})
+    return out
+
+
 def bracket_backtest():
-    """docs/bracket_backtest.png — 1x2 from notebook 08 (rank histogram + per-season conf)."""
-    bt = pd.read_csv(DATA / "bracket_backtest.csv")
+    """docs/bracket_backtest.png — 1x2, rank histogram + per-season confidence."""
+    bt = _champion_ranks()["p_pre"]
 
     fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 
-    axes[0].hist(bt.actual_champ_rank, bins=range(1, 18),
+    axes[0].hist(bt["rank"], bins=range(1, 18),
                  color=plot_style.COLORS["primary"], edgecolor="white")
     axes[0].set_title("Real champion's rank")
     axes[0].set_xlabel("Rank in model's top list")
     axes[0].set_ylabel("Number of seasons")
 
-    axes[1].plot(bt.season, bt.actual_champ_p, marker="o",
+    axes[1].plot(bt.season, bt.p, marker="o",
                  color=plot_style.COLORS["secondary"])
     axes[1].axhline(1 / 16, color=plot_style.COLORS["neutral"], linestyle="--",
                     label="random (1/16)")
@@ -118,38 +135,34 @@ def bracket_backtest():
 
 # -------------------------------------------------------------------------- d)
 def conditional_confidence():
-    """docs/conditional_confidence.png — 1x2 from notebook 09."""
-    df = pd.read_csv(DATA / "conditional_predictions.csv")
-    summary = df.groupby("start_round").agg(
-        top1=("rank_actual", lambda r: (r == 1).mean()),
-        top3=("rank_actual", lambda r: (r <= 3).mean()),
-        avg_p=("p_actual", "mean"),
-    )
-    labels = {1: "Pre-playoffs\n(16)", 2: "Round 2\n(8)",
-              3: "Conf. Finals\n(4)", 4: "Finals\n(2)"}
-    x = [labels[i] for i in summary.index]
+    """docs/conditional_confidence.png — 1x2, how the odds sharpen by round."""
+    states = _champion_ranks()
+    labels = ["Pre-playoffs\n(16)", "Round 2\n(8)", "Conf. Finals\n(4)", "Finals\n(2)"]
+    top1 = [(s["rank"] == 1).mean() for s in states.values()]
+    top3 = [(s["rank"] <= 3).mean() for s in states.values()]
+    avg_p = [s.p.mean() for s in states.values()]
 
     fig, axes = plt.subplots(1, 2, figsize=(13, 5))
 
-    axes[0].plot(x, summary.top1, marker="o", linewidth=2.2,
+    axes[0].plot(labels, top1, marker="o", linewidth=2.2,
                  color=plot_style.COLORS["primary"], label="Top-1 hit rate")
-    axes[0].plot(x, summary.top3, marker="s", linewidth=2.2,
+    axes[0].plot(labels, top3, marker="s", linewidth=2.2,
                  color=plot_style.COLORS["accent"], label="Top-3 hit rate")
     axes[0].set_ylim(0, 1.05)
     axes[0].set_ylabel("Hit rate")
     axes[0].set_title("Hit rate")
     axes[0].legend()
-    for col in [summary.top1, summary.top3]:
+    for col in [top1, top3]:
         for i, v in enumerate(col):
             axes[0].annotate(f"{v:.0%}", (i, v), textcoords="offset points",
                              xytext=(0, 8), ha="center", fontsize=9)
 
-    axes[1].plot(x, summary.avg_p, marker="D", linewidth=2.2,
+    axes[1].plot(labels, avg_p, marker="D", linewidth=2.2,
                  color=plot_style.COLORS["secondary"])
     axes[1].set_ylim(0, 1.05)
     axes[1].set_ylabel("Avg P(actual champion)")
     axes[1].set_title("Avg. P for the real champion")
-    for i, v in enumerate(summary.avg_p):
+    for i, v in enumerate(avg_p):
         axes[1].annotate(f"{v:.0%}", (i, v), textcoords="offset points",
                          xytext=(0, 8), ha="center", fontsize=9)
 
