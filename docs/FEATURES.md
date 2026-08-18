@@ -1,6 +1,6 @@
 # Data & Features — Glossary
 
-Explains every raw data table (from Kaggle) and every engineered feature used by the model. Written so it makes sense without deep ML background.
+Explains every raw data table (from Kaggle) and every engineered feature used by the model.
 
 ---
 

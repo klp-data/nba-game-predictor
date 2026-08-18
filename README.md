@@ -39,7 +39,7 @@ And the data is easy to come by. The NBA has tracked detailed statistics for dec
 | 07 | `07_series_simulation.ipynb` | Best-of-7 Monte Carlo with the NBA 2-2-1-1-1 home pattern |
 | 08 | `08_bracket_simulation.ipynb` | Full bracket Monte Carlo (5,000 sims/season, 40 seasons backtested) |
 | 09 | `09_conditional_predictions.ipynb` | Probability updating as playoff rounds resolve |
-| 10 | `10_live_demo_2025.ipynb` | Live championship probabilities for the ongoing 2025–26 playoffs |
+| 10 | `10_playoffs_2026.ipynb` | Championship probabilities through the 2026 playoffs |
 
 ## Results
 

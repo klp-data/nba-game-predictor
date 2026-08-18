@@ -4,5 +4,5 @@
   "n_features": 27,
   "n_sims": 20000,
   "sim_seed": "season * 10 + start_round",
-  "build_timestamp": "2026-08-18T08:20:49+00:00"
+  "build_timestamp": "2026-08-18T11:02:23+00:00"
 }
