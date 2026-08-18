@@ -8,9 +8,9 @@ install on the system, otherwise matplotlib falls back to mathtext.
 """
 from __future__ import annotations
 
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-
+# matplotlib is imported inside apply(), not up here. The dashboard reads COLORS
+# from this module and never plots with matplotlib, and pulling matplotlib into
+# the hosted app would mean installing it on Streamlit Cloud for four hex codes.
 
 COLORS = {
     'primary':   '#1f77b4',  # blue
@@ -24,6 +24,9 @@ PALETTE = ['#1f77b4', '#f93414', '#57A048']
 
 def apply(use_tex: bool = False) -> None:
     """Apply the project's matplotlib style."""
+    import matplotlib as mpl
+    import matplotlib.pyplot as plt
+
     plt.rcdefaults()
     mpl.rcParams.update({
         'font.family':       'serif',

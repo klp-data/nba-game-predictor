@@ -19,10 +19,10 @@ And the data is easy to come by. The NBA has tracked detailed statistics for dec
 | Out-of-sample game accuracy | **65.0 %** | Full 63-feature model, test set 2019–2025 |
 | Walk-forward backtest accuracy | **67.6 %** | 66 seasons (1960–2025), retrained per year |
 | Walk-forward AUC | **0.71** | Stable across all eras |
-| Champion = model's top pick | **52.5 %** | 21/40 backtested seasons |
-| Champion in model's top 3 | **75 %** | 30/40 seasons |
-| Champion in model's top 5 | **92.5 %** | 37/40 seasons |
-| Avg. probability assigned to actual champion | **34 %** | 5.4× the 6.25 % random baseline |
+| Champion = model's top pick | **51.2 %** | 21/41 backtested seasons |
+| Champion in model's top 3 | **73.2 %** | 30/41 seasons |
+| Champion in model's top 5 | **90.2 %** | 37/41 seasons |
+| Avg. probability assigned to actual champion | **33.2 %** | 5.3× the 6.25 % random baseline |
 
 ## Pipeline overview
 
@@ -65,11 +65,13 @@ Across 40 backtested seasons (1983–2024), the actual NBA champion was the mode
 
 Average probability assigned to the eventual champion: 34 % before the playoffs, 37 % after round 1, 45 % after the conference semis, 66 % in the finals. Most of the uncertainty lives in round 1. Once the final eight are set, the model gets much sharper.
 
-### Live: 2025–26 playoffs (round 1 in progress)
+### 2026 playoffs: what the model said, and what happened
 
-![Live 2026](docs/live_2026.png)
+![2026 playoffs](docs/playoffs_2026.png)
 
-Current top picks, using the real round-1 matchups and current series scores, then re-seeding by ELO for the later rounds: Thunder 58.5 %, Spurs 21.6 %, Celtics 11.2 %, Pistons 3.2 %, Cavaliers 1.7 %. The Thunder jumped after going up 3-0 against the Suns; once a team is one win away in a best-of-7, the conditional probability tilts hard.
+Before round 1 the model had the Thunder at 49.8 %, Spurs 17.3 %, Celtics 15.0 %. The Knicks were seventh at 2.2 %. The Knicks won the title.
+
+The top two picks met in the West finals and the series went to seven games, so the model was not far off there. It missed the Knicks. They went in as a third seed with a pre-playoff ELO of 1630, rank 7 by ELO, and then won thirteen playoff games in a row. ELO with K=20 needs a few weeks to catch up to a run like that, and the playoffs are over before it does. This is the limit of team-level history in one season: it knows who was good, not who just got better.
 
 ## What I learned
 
@@ -87,21 +89,24 @@ Which is, I think, the real finding: team-level historical data caps out around 
 
 Hyperparameter tuning with proper nested cross-validation (Optuna), probability calibration before feeding per-game predictions into the bracket simulator, and a real player-level feature set built from injury reports and confirmed lineups. I have started experimenting with the first two; nothing publishable yet.
 
-## Interactive demo
+## Dashboard
 
-![Demo app](assets/demo.png)
+Four pages, all reading small derived files instead of the raw dataset.
 
-A small Streamlit app: pick two teams, get the predicted win probability and a SHAP breakdown of the features that pushed it there.
+- Matchup: pick two teams, get a win probability and a SHAP breakdown of what drove it.
+- ELO explorer: every team's rating after every game since 1946, in team colours.
+- Playoffs: any season's title odds before and during the playoffs, against what actually happened.
+- Model report: walk-forward metrics by era, calibration, feature importance, home advantage over time.
 
 ```bash
-streamlit run Demo.py
+streamlit run dashboard/app.py
 ```
 
-Needs the processed dataset from notebook 02 and the trained model from notebook 03.
+Runs off `dashboard/data/`, which is committed. No Kaggle download and no notebook run needed.
 
 ## Tech stack
 
-`Python` · `pandas` · `numpy` · `XGBoost` · `scikit-learn` · `matplotlib` · `seaborn` · `pyarrow` · `joblib` · `streamlit`
+`Python` · `pandas` · `numpy` · `XGBoost` · `scikit-learn` · `matplotlib` · `seaborn` · `pyarrow` · `joblib` · `streamlit` · `Plotly`
 
 ## Reproduce
 
@@ -109,6 +114,8 @@ Needs the processed dataset from notebook 02 and the trained model from notebook
 git clone https://github.com/klp-data/nba-game-predictor.git
 cd nba-game-predictor
 pip install -r requirements.txt
+# requirements.txt is for the notebooks and scripts. The hosted dashboard installs
+# dashboard/requirements.txt, which is the smaller subset the app actually imports.
 # Download the Kaggle dataset below into data/raw/
 jupyter notebook notebooks/
 # Run 01 -> 10 in order

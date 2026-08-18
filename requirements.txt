@@ -1,3 +1,5 @@
+# Everything the notebooks and scripts need. The hosted dashboard installs
+# dashboard/requirements.txt instead, which is a subset of these pins.
 pandas==3.0.2
 numpy==2.4.4
 scikit-learn==1.8.0
@@ -12,3 +14,5 @@ pyarrow==24.0.0
 pytest==9.0.3
 streamlit==1.57.0
 shap==0.51.0
+plotly==6.5.2
+kaleido==1.3.0

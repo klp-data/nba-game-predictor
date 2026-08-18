@@ -1,0 +1,12 @@
+# What the hosted dashboard needs, nothing else. Community Cloud looks here first,
+# before the requirements.txt in the repo root, because this sits next to app.py.
+# Pins match the root file wherever a package appears in both.
+streamlit==1.57.0
+pandas==3.0.2
+numpy==2.4.4
+pyarrow==24.0.0
+scikit-learn==1.8.0
+xgboost==3.2.0
+shap==0.51.0
+joblib==1.5.3
+plotly==6.5.2

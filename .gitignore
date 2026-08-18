@@ -1,6 +1,8 @@
 # Data (too large for GitHub — keep local)
 data/raw/
 data/processed/
+/data/
+*_backup_*/
 *.zip
 
 # Models
