@@ -1,5 +1,7 @@
 # NBA Game Predictor
 
+Interactive dashboard: https://nba-game-predictor-3ztnkwzrfbrxyfnjqxqiat.streamlit.app/
+
 A personal machine-learning project where I try to predict the outcomes of NBA games, playoff series, and championships, using historical data from [Kaggle](https://www.kaggle.com/datasets/eoinamoore/historical-nba-data-and-player-box-scores) that goes back to the first BAA season in 1946.
 
 ## Why basketball?
@@ -97,6 +99,10 @@ Four pages, all reading small derived files instead of the raw dataset.
 - ELO explorer: every team's rating after every game since 1946, in team colours.
 - Playoffs: any season's title odds before and during the playoffs, against what actually happened.
 - Model report: walk-forward metrics by era, calibration, feature importance, home advantage over time.
+
+Hosted here: https://nba-game-predictor-3ztnkwzrfbrxyfnjqxqiat.streamlit.app/
+
+To run it locally:
 
 ```bash
 streamlit run dashboard/app.py
